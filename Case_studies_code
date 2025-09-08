@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dimensionality Reduction Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f4;
+            color: #292524;
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #0d9488;
+            border-bottom-color: #0d9488;
+        }
+        .case-study-btn {
+            transition: background-color 0.3s, color 0.3s, transform 0.2s;
+        }
+        .case-study-btn.active {
+            background-color: #0d9488;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .plotly-chart-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #0d9488;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-stone-50/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-xl text-teal-700">Dimension Reduction</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#intro" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-stone-700">Introduction</a>
+                        <a href="#why" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-stone-700">Why It Matters</a>
+                        <a href="#case-studies" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-stone-700">Case Studies</a>
+                        <a href="#summary" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-stone-700">Summary</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="intro" class="py-20 sm:py-28">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-stone-900">An Introduction to Dimensionality Reduction 📉</h1>
+                <p class="mt-6 max-w-3xl mx-auto text-lg sm:text-xl text-stone-600">The process of simplifying complex data by reducing the number of features, without losing the important information. Let's explore how this powerful technique makes sense of our high-dimensional world.</p>
+            </div>
+        </section>
+
+        <section id="why" class="py-20 sm:py-24 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">Why Does It Matter? 🤔</h2>
+                    <p class="mt-4 text-lg text-stone-600">Working with high-dimensional data presents the "Curse of Dimensionality," where data becomes sparse and patterns are hard to find. Reducing dimensions provides several key advantages.</p>
+                </div>
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="bg-stone-50 p-6 rounded-lg shadow-md">
+                        <h3 class="text-lg font-semibold text-teal-700">🚀 Improves Model Performance</h3>
+                        <p class="mt-2 text-stone-600">Reduces overfitting by removing noise and redundancy, helping models generalize better to new, unseen data.</p>
+                    </div>
+                    <div class="bg-stone-50 p-6 rounded-lg shadow-md">
+                        <h3 class="text-lg font-semibold text-teal-700">⏱️ Faster Computation</h3>
+                        <p class="mt-2 text-stone-600">Fewer features mean less data to process, which significantly speeds up model training and prediction times.</p>
+                    </div>
+                    <div class="bg-stone-50 p-6 rounded-lg shadow-md">
+                        <h3 class="text-lg font-semibold text-teal-700">📊 Better Visualization</h3>
+                        <p class="mt-2 text-stone-600">Allows complex, high-dimensional data to be plotted and explored in 2D or 3D, revealing hidden structures and insights.</p>
+                     <div class="bg-stone-50 p-6 rounded-lg shadow-md">
+                        <h3 class="text-lg font-semibold text-teal-700">🗑️ Reduces Noise</h3>
+                        <p class="mt-2 text-stone-600">Helps to filter out irrelevant or redundant features, focusing the analysis on the most informative signals in the data.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="case-studies" class="py-20 sm:py-24">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">Real-World Case Studies 🌍</h2>
+                    <p class="mt-4 text-lg text-stone-600">Dimensionality reduction is not just a theoretical concept; it powers many technologies we use every day. Select a case study below to see how it's applied in different fields to solve complex problems.</p>
+                </div>
+
+                <div id="case-study-nav" class="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8">
+                </div>
+
+                <div id="case-study-content" class="bg-white p-6 sm:p-8 rounded-lg shadow-lg min-h-[500px]">
+                </div>
+            </div>
+        </section>
+
+        <section id="summary" class="py-20 sm:py-24 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                 <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">Summary & Key Takeaways ✅</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-stone-600">This exploration shows that dimensionality reduction is a crucial and versatile technique for handling the large, complex datasets of the modern world. Here are the main points to remember.</p>
+                </div>
+                <div class="mt-12 max-w-4xl mx-auto space-y-4">
+                    <div class="bg-stone-50 p-4 rounded-lg">
+                        <p class="text-stone-700"><span class="font-semibold text-teal-700">More Than Visualization:</span> It's fundamentally about making models more efficient, accurate, and robust.</p>
+                    </div>
+                    <div class="bg-stone-50 p-4 rounded-lg">
+                        <p class="text-stone-700"><span class="font-semibold text-teal-700">Diverse Toolset:</span> Key methods like <b class="text-stone-800">PCA, t-SNE, SVD,</b> and <b class="text-stone-800">Autoencoders</b> are each suited for different types of problems and data structures.</p>
+                    </div>
+                    <div class="bg-stone-50 p-4 rounded-lg">
+                        <p class="text-stone-700"><span class="font-semibold text-teal-700">Foundational Concept:</span> It's a core idea in data science and machine learning with widespread applications across nearly every industry.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-stone-800 text-stone-300 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>Dimensionality Reduction Explorer</p>
+            <p class="text-sm text-stone-400 mt-1">An interactive guide to a core machine learning concept.</p>
+        </div>
+    </footer>
+
+    <script>
+        const caseStudiesData = [
+            {
+                id: 'image-compression',
+                title: 'Image Compression',
+                icon: '🖼️',
+                content: {
+                    problem: 'High-resolution images are massive, with each pixel being a dimension. This makes them difficult to store and transmit.',
+                    solution: 'Use Principal Component Analysis (PCA) to find the most important features (principal components) of the image data.',
+                    howItWorks: 'Instead of storing every pixel, we store the scores of these principal components, which capture the essence of the image.',
+                    result: 'The image file size is drastically reduced while retaining a high level of visual quality.',
+                    example: 'A 1000x1000 pixel grayscale image has 1,000,000 dimensions. PCA can reduce this to a much smaller set of components, making the file size manageable.'
+                },
+                chartType: 'bar'
+            },
+            {
+                id: 'genomic-data',
+                title: 'Genomic Data Analysis',
+                icon: '🧬',
+                content: {
+                    problem: 'A single genomic dataset can have thousands of genes (dimensions) for each patient, making it impossible to visualize relationships.',
+                    solution: 'Use techniques like t-Distributed Stochastic Neighbor Embedding (t-SNE) or PCA to reduce the data to a manageable 2D or 3D space.',
+                    howItWorks: 'These methods find a lower-dimensional representation that preserves the relationships between data points, allowing for clear visualization.',
+                    result: 'Researchers can plot the data and visually identify clusters of patients with similar gene expression profiles, helping to diagnose diseases and identify biomarkers.',
+                    example: 'A plot shows two distinct clusters of patients: one for a specific disease and another for healthy individuals.'
+                },
+                chartType: 'plotly_scatter'
+            },
+            {
+                id: 'recommendation-systems',
+                title: 'Recommendation Systems',
+                icon: '🛒',
+                content: {
+                    problem: 'Recommendation systems deal with vast, sparse data (e.g., a user-item matrix where a user has only rated a handful of products).',
+                    solution: 'Use Singular Value Decomposition (SVD) to reduce the dimensionality of the user-item matrix.',
+                    howItWorks: 'SVD breaks down the matrix into smaller matrices representing latent factors, such as a user\'s preference for a movie genre and a movie\'s "action" rating.',
+                    result: 'The system can predict how a user would rate an item they haven\'t seen by combining these latent factors. This makes recommendations more accurate and the system more efficient.',
+                    example: 'A model can predict a user will like a sci-fi movie even if they haven\'t seen it, based on their ratings of other sci-fi films and the movie\'s features.'
+                },
+                chartType: 'diagram'
+            },
+            {
+                id: 'nlp',
+                title: 'Natural Language Processing',
+                icon: '✍️',
+                content: {
+                    problem: 'Text data, represented as a "bag-of-words," can have tens of thousands of dimensions (one for each word in the vocabulary). This is computationally expensive and noisy.',
+                    solution: 'Use word embeddings (e.g., Word2Vec) to represent words as dense, low-dimensional vectors.',
+                    howItWorks: 'Words with similar meanings are mapped to nearby points in a low-dimensional space.',
+                    result: 'The system can capture the semantic meaning of text more efficiently, leading to better performance in tasks like sentiment analysis, topic modeling, and document classification.',
+                    example: 'In a 300-dimensional vector space, "king" and "queen" would be very close, as would "apple" and "orange."'
+                },
+                chartType: 'scatter'
+            },
+            {
+                id: 'cybersecurity',
+                title: 'Cybersecurity',
+                icon: '🛡️',
+                content: {
+                    problem: 'Network traffic and user behavior data have hundreds of features, making it hard to identify subtle signs of a security breach.',
+                    solution: 'Use autoencoders to learn the "normal" pattern of data.',
+                    howItWorks: 'An autoencoder compresses and then reconstructs the input data. Normal data will have a low reconstruction error, while an anomaly (like a malicious packet) will have a high reconstruction error.',
+                    result: 'The system can automatically flag high-error data points as potential threats, allowing security teams to focus on the most relevant events.',
+                    example: 'A log of network activity is compressed and reconstructed. The system flags an event where the data volume is unusually high, as its reconstruction error is significantly larger than normal.'
+                },
+                chartType: 'line'
+            },
+            {
+                id: 'medical-diagnosis',
+                title: 'Medical Diagnosis',
+                icon: '🩺',
+                content: {
+                    problem: 'Patient records contain vast amounts of high-dimensional data, including thousands of lab results, symptoms, and genetic markers, making manual analysis challenging.',
+                    solution: 'Apply techniques like PCA or t-SNE to reduce the data from hundreds of dimensions to a simple 2D or 3D visualization.',
+                    howItWorks: 'By mapping the data to a lower dimension, clusters of patients with similar underlying conditions or disease states emerge, which can be visualized easily.',
+                    result: 'Doctors and researchers can identify distinct patient subgroups and discover new insights, helping to create personalized treatment plans or diagnose diseases earlier.',
+                    example: 'A scatter plot of patient data reveals three distinct clusters, corresponding to "healthy," "early-stage disease," and "advanced-stage disease," based on their lab results and symptoms.'
+                },
+                chartType: 'multi_scatter'
+            }
+        ];
+
+        let activeCaseStudy = caseStudiesData[0].id;
+        let currentChart = null;
+
+        const caseStudyNav = document.getElementById('case-study-nav');
+        const caseStudyContent = document.getElementById('case-study-content');
+
+        function renderCaseStudy() {
+            const study = caseStudiesData.find(cs => cs.id === activeCaseStudy);
+            if (!study) return;
+
+            caseStudyContent.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h3 class="text-2xl font-bold text-stone-800 mb-4">${study.title} ${study.icon}</h3>
+                        <div class="space-y-4 text-stone-700">
+                            <p><strong>Problem:</strong> ${study.content.problem}</p>
+                            <p><strong>Solution:</strong> ${study.content.solution}</p>
+                            <p><strong>Result:</strong> ${study.content.result}</p>
+                        </div>
+                        <div class="mt-6 p-4 bg-teal-50 border-l-4 border-teal-600 rounded-r-lg">
+                            <p class="text-sm font-semibold text-teal-800">Example:</p>
+                            <p class="text-sm text-teal-700 mt-1">${study.content.example}</p>
+                        </div>
+                        <button id="geminiBtn" class="mt-6 w-full sm:w-auto bg-stone-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-stone-600 transition disabled:opacity-50">✨ Get a simpler explanation</button>
+                    </div>
+                    <div id="visualization-area" class="min-h-[400px] flex items-center justify-center">
+                    </div>
+                </div>
+                <div id="gemini-explanation" class="mt-8 bg-stone-100 p-6 rounded-lg border border-stone-200 hidden">
+                    <h4 class="text-lg font-semibold text-stone-800 mb-2">Simplified Explanation</h4>
+                    <p id="explanation-text" class="text-stone-700"></p>
+                </div>
+            `;
+            
+            renderVisualization(study);
+            updateNavButtons();
+            document.getElementById('geminiBtn').addEventListener('click', () => explainConceptWithGemini(study.title));
+        }
+
+        async function explainConceptWithGemini(conceptTitle) {
+            const explanationDiv = document.getElementById('gemini-explanation');
+            const explanationText = document.getElementById('explanation-text');
+            const button = document.getElementById('geminiBtn');
+
+            button.disabled = true;
+            button.innerHTML = `<span class="spinner"></span> Generating...`;
+            explanationText.innerHTML = '';
+            explanationDiv.classList.remove('hidden');
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            const userQuery = `Explain ${conceptTitle} from the context of dimensionality reduction in a simple, easy-to-understand way. Use a clear analogy to help someone with no technical background understand it. Keep the explanation concise and to the point.`;
+            
+            const systemPrompt = "You are a friendly and knowledgeable data science tutor. Your explanations should be clear, concise, and easy for a beginner to grasp. Use a relatable analogy.";
+            
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            let response;
+            try {
+                let retries = 0;
+                const maxRetries = 3;
+                while (retries < maxRetries) {
+                    try {
+                        response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if (response.status === 429) {
+                            await new Promise(res => setTimeout(res, Math.pow(2, retries) * 1000));
+                            retries++;
+                            continue;
+                        }
+                        break;
+                    } catch (error) {
+                        await new Promise(res => setTimeout(res, Math.pow(2, retries) * 1000));
+                        retries++;
+                    }
+                }
+                
+                if (!response || !response.ok) {
+                    explanationText.innerHTML = 'Sorry, something went wrong. Please try again.';
+                    return;
+                }
+
+                const result = await response.json();
+                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                explanationText.innerHTML = text || 'No explanation found. Please try a different query.';
+            } catch (error) {
+                console.error('API call failed:', error);
+                explanationText.innerHTML = 'Sorry, there was an error connecting to the service.';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '✨ Get a simpler explanation';
+            }
+        }
+        
+        function renderVisualization(study) {
+            const vizArea = document.getElementById('visualization-area');
+            if (currentChart) {
+                if(typeof currentChart.destroy === 'function') {
+                    currentChart.destroy();
+                } else if (study.chartType !== 'plotly_scatter') {
+                    Plotly.purge(vizArea);
+                }
+                currentChart = null;
+            }
+            vizArea.innerHTML = ''; 
+
+            switch (study.chartType) {
+                case 'bar':
+                    vizArea.innerHTML = `
+                        <div>
+                            <p class="text-center font-semibold mb-2">Dimensions: Original vs. PCA Compressed</p>
+                            <div class="chart-container"><canvas id="barChart"></canvas></div>
+                        </div>`;
+                    createBarChart();
+                    break;
+                case 'plotly_scatter':
+                    vizArea.innerHTML = `
+                        <div>
+                           <p class="text-center font-semibold mb-2">Interactive 3D Genomic Data</p>
+                           <div class="flex justify-center gap-4 my-2">
+                                <button id="view-3d" class="bg-teal-500 text-white px-4 py-2 rounded-md hover:bg-teal-600 transition">View in 3D</button>
+                                <button id="view-2d" class="bg-stone-500 text-white px-4 py-2 rounded-md hover:bg-stone-600 transition">Reduce to 2D</button>
+                           </div>
+                           <div id="plotlyChart" class="plotly-chart-container"></div>
+                        </div>
+                    `;
+                    createPlotlyScatter();
+                    break;
+                case 'diagram':
+                    vizArea.innerHTML = `
+                        <div class="text-center p-4">
+                            <p class="font-semibold mb-4">SVD: Decomposing a large matrix</p>
+                            <svg class="mx-auto" width="350" height="150" xmlns="http://www.w3.org/2000/svg">
+                                <!-- U Matrix -->
+                                <rect x="10" y="20" width="60" height="110" rx="8" ry="8" fill="#D1F0E4" stroke="#0D9488" stroke-width="2"/>
+                                <text x="40" y="80" font-family="Inter" font-size="12" text-anchor="middle" fill="#0D9488" font-weight="bold">User-Feature</text>
+                                
+                                <!-- Sigma Matrix -->
+                                <rect x="90" y="55" width="60" height="40" rx="8" ry="8" fill="#FEEBC8" stroke="#F59E0B" stroke-width="2"/>
+                                <text x="120" y="80" font-family="Inter" font-size="12" text-anchor="middle" fill="#F59E0B" font-weight="bold">Feature Scores</text>
+
+                                <!-- V^T Matrix -->
+                                <rect x="170" y="20" width="100" height="110" rx="8" ry="8" fill="#FCE7F3" stroke="#DB2777" stroke-width="2"/>
+                                <text x="220" y="80" font-family="Inter" font-size="12" text-anchor="middle" fill="#DB2777" font-weight="bold">Item-Feature</text>
+
+                                <!-- Original Matrix -->
+                                <rect x="300" y="20" width="100" height="110" rx="8" ry="8" fill="#E2E8F0" stroke="#64748B" stroke-width="2"/>
+                                <text x="350" y="80" font-family="Inter" font-size="12" text-anchor="middle" fill="#64748B" font-weight="bold">Original Matrix</text>
+
+                                <!-- Arrows and Text -->
+                                <path d="M285,85 L295,85" stroke="#64748B" stroke-width="2" marker-end="url(#arrowhead)"/>
+                                <defs>
+                                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                        <polygon points="0 0, 10 3.5, 0 7" fill="#64748B" />
+                                    </marker>
+                                </defs>
+                                <text x="80" y="85" font-family="Inter" font-size="14" text-anchor="middle" fill="#64748B" font-weight="bold">×</text>
+                                <text x="159" y="85" font-family="Inter" font-size="14" text-anchor="middle" fill="#64748B" font-weight="bold">×</text>
+                            </svg>
+                            <p class="mt-4 text-stone-600">A large, sparse matrix is broken into smaller, dense matrices representing latent features.</p>
+                        </div>
+                    `;
+                    break;
+                case 'scatter':
+                    vizArea.innerHTML = `
+                        <div>
+                            <p class="text-center font-semibold mb-2">Word Embeddings: Semantic Relationships</p>
+                            <div class="chart-container"><canvas id="scatterChart"></canvas></div>
+                        </div>`;
+                    createScatterChart();
+                    break;
+                case 'line':
+                    vizArea.innerHTML = `
+                         <div>
+                            <p class="text-center font-semibold mb-2">Autoencoder: Anomaly Detection</p>
+                            <div class="chart-container"><canvas id="lineChart"></canvas></div>
+                            <div class="text-center mt-4">
+                                <button id="anomalyBtn" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition">Introduce Anomaly</button>
+                            </div>
+                        </div>`;
+                    createLineChart();
+                    break;
+                case 'multi_scatter':
+                    vizArea.innerHTML = `
+                        <div>
+                            <p class="text-center font-semibold mb-2">Medical Diagnosis Clusters (2D Projection)</p>
+                            <div class="chart-container"><canvas id="multiScatterChart"></canvas></div>
+                        </div>`;
+                    createMultiScatterChart();
+                    break;
+            }
+        }
+        
+        function createBarChart() {
+            const ctx = document.getElementById('barChart').getContext('2d');
+            currentChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Original Image', 'PCA Compressed'],
+                    datasets: [{
+                        label: 'Number of Dimensions',
+                        data: [1000000, 5000],
+                        backgroundColor: ['rgba(20, 184, 166, 0.6)', 'rgba(245, 158, 11, 0.6)'],
+                        borderColor: ['rgb(13, 148, 136)', 'rgb(217, 119, 6)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, type: 'logarithmic', title: { display: true, text: 'Dimensions (Log Scale)' } } }
+                }
+            });
+        }
+        
+        function createPlotlyScatter() {
+            const vizArea = document.getElementById('plotlyChart');
+            const N = 100;
+            const trace1 = {
+                x: Array.from({length: N}, () => Math.random() * 2 - 1),
+                y: Array.from({length: N}, () => Math.random() * 2 - 1),
+                z: Array.from({length: N}, () => Math.random() * 0.5),
+                mode: 'markers', type: 'scatter3d',
+                marker: { color: 'rgba(217, 119, 6, 0.7)', size: 5 }
+            };
+            const trace2 = {
+                x: Array.from({length: N}, () => Math.random() * 2 - 1),
+                y: Array.from({length: N}, () => Math.random() * 2 - 1),
+                z: Array.from({length: N}, () => Math.random() * 0.5 + 1.5),
+                mode: 'markers', type: 'scatter3d',
+                marker: { color: 'rgba(13, 148, 136, 0.7)', size: 5 }
+            };
+            
+            const layout3D = { title: '3D View: Two groups, slightly overlapping', autosize: true, margin: { l: 0, r: 0, b: 0, t: 40 } };
+            Plotly.newPlot(vizArea, [trace1, trace2], layout3D, {responsive: true});
+
+            document.getElementById('view-3d').addEventListener('click', () => {
+                Plotly.react(vizArea, [trace1, trace2], layout3D, {responsive: true});
+            });
+            document.getElementById('view-2d').addEventListener('click', () => {
+                const trace1_2d = { ...trace1, type: 'scatter', mode: 'markers', z: undefined };
+                const trace2_2d = { ...trace2, type: 'scatter', mode: 'markers', z: undefined };
+                const layout2D = { title: '2D View: Clusters are now clearly distinct', autosize: true, margin: { l: 40, r: 20, b: 40, t: 40 }, xaxis: {title: 'Principal Component 1'}, yaxis: {title: 'Principal Component 2'} };
+                Plotly.react(vizArea, [trace1_2d, trace2_2d], layout2D, {responsive: true});
+            });
+        }
+
+        function createScatterChart() {
+            const ctx = document.getElementById('scatterChart').getContext('2d');
+            currentChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        { label: 'Royalty', data: [{x: 2, y: 8}, {x: 8, y: 2}], backgroundColor: 'rgba(20, 184, 166, 0.8)' },
+                        { label: 'Commoners', data: [{x: 2.5, y: 7}, {x: 7.5, y: 1}], backgroundColor: 'rgba(245, 158, 11, 0.8)' },
+                        { label: 'Fruit', data: [{x: 1, y: 1}, {x: 1.5, y: 1.5}], backgroundColor: 'rgba(239, 68, 68, 0.8)' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const labels = {
+                                        '2,8': 'King', '8,2': 'Queen',
+                                        '2.5,7': 'Man', '7.5,1': 'Woman',
+                                        '1,1': 'Apple', '1.5,1.5': 'Orange'
+                                    };
+                                    return labels[`${context.parsed.x},${context.parsed.y}`] || '';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    }
+                }
+            });
+        }
+        
+        function createLineChart() {
+            const ctx = document.getElementById('lineChart').getContext('2d');
+            const initialData = {
+                labels: Array.from({length: 10}, (_, i) => `T${i+1}`),
+                datasets: [{
+                    label: 'Reconstruction Error',
+                    data: [0.1, 0.12, 0.09, 0.11, 0.1, 0.13, 0.08, 0.1, 0.11, 0.09],
+                    fill: false,
+                    borderColor: 'rgb(13, 148, 136)',
+                    tension: 0.1
+                }]
+            };
+            currentChart = new Chart(ctx, { type: 'line', data: initialData, options: { responsive: true, maintainAspectRatio: false } });
+
+            document.getElementById('anomalyBtn').addEventListener('click', () => {
+                const newData = [...initialData.datasets[0].data];
+                newData[6] = 1.5; 
+                currentChart.data.datasets[0].data = newData;
+                currentChart.update();
+            });
+        }
+
+        function createMultiScatterChart() {
+            const ctx = document.getElementById('multiScatterChart').getContext('2d');
+            currentChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Healthy',
+                            data: Array.from({length: 50}, () => ({ x: Math.random() * 2 - 1, y: Math.random() * 2 - 1 })),
+                            backgroundColor: 'rgba(13, 148, 136, 0.8)'
+                        },
+                        {
+                            label: 'Early-Stage Disease',
+                            data: Array.from({length: 25}, () => ({ x: Math.random() * 1.5 + 1.5, y: Math.random() * 1.5 + 1.5 })),
+                            backgroundColor: 'rgba(245, 158, 11, 0.8)'
+                        },
+                        {
+                            label: 'Advanced-Stage Disease',
+                            data: Array.from({length: 15}, () => ({ x: Math.random() * 1.5 - 2, y: Math.random() * 1.5 + 1.5 })),
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Reduced Dimension 1' } },
+                        y: { title: { display: true, text: 'Reduced Dimension 2' } }
+                    }
+                }
+            });
+        }
+
+        function updateNavButtons() {
+            const buttons = document.querySelectorAll('.case-study-btn');
+            buttons.forEach(btn => {
+                if (btn.dataset.id === activeCaseStudy) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        function init() {
+            caseStudiesData.forEach(study => {
+                const button = document.createElement('button');
+                button.innerHTML = `${study.icon} ${study.title}`;
+                button.dataset.id = study.id;
+                button.className = 'case-study-btn bg-white text-stone-700 font-semibold py-2 px-4 border border-stone-300 rounded-lg shadow-sm hover:bg-stone-100';
+                button.addEventListener('click', () => {
+                    activeCaseStudy = study.id;
+                    renderCaseStudy();
+                });
+                caseStudyNav.appendChild(button);
+            });
+            renderCaseStudy();
+        }
+
+        init();
+    </script>
+</body>
+</html>
