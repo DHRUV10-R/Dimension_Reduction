@@ -1,122 +1,451 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dimensionality Reduction Explorer</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dimensionality Reduction Explorer — Enhanced</title>
+
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Plotly CDN -->
   <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    .pill {
-      transition: all 0.2s; border-radius: 9999px; padding: 0.5rem 1.25rem; font-weight: 500;
-      background: linear-gradient(90deg, #14b8a6 0%, #34d399 100%);
-      color: white; cursor: pointer; border: none; outline: none;
+    :root{
+      --teal-600: #0d9488;
+      --teal-400: #34d399;
+      --muted: #6b7280;
+      --bg: #f8fafc;
     }
-    .pill:not(.active):hover { background: linear-gradient(90deg, #2dd4bf 0%, #6ee7b7 100%); transform: scale(1.05);}
-    .pill.active { background: linear-gradient(90deg, #0d9488 0%, #059669 100%); color: #fff; transform: scale(1.08);}
-    header { font-weight: 700; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: #0f172a; }
+    header.site-header {
+      background: linear-gradient(90deg, rgba(13,148,136,0.06), rgba(52,211,153,0.03));
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(15,23,42,0.04);
+    }
+    .pill {
+      display:inline-flex; align-items:center; gap:0.5rem;
+      border-radius:9999px; padding:0.5rem 1rem; font-weight:600; font-size:0.95rem;
+      background: linear-gradient(90deg,#14b8a6,#34d399); color:white; box-shadow:0 6px 18px rgba(16,185,129,0.08);
+      border: none; cursor:pointer; transform-origin:center center; transition:all .18s ease;
+    }
+    .pill:hover { transform: translateY(-4px) scale(1.03); }
+    .pill.secondary {
+      background: white; color: var(--teal-600); box-shadow: 0 6px 18px rgba(15,23,42,0.04); border:1px solid rgba(15,23,42,0.04);
+    }
+    .pill.active { background: linear-gradient(90deg,var(--teal-600),#059669); color: #fff; transform: scale(1.05); }
+    .card { background:white; border-radius:16px; padding:1rem; box-shadow: 0 10px 30px rgba(2,6,23,0.06); }
+    .fade-in { animation: fadeIn .42s ease both; }
+    @keyframes fadeIn { from {opacity:0; transform: translateY(6px);} to {opacity:1; transform:none;} }
+    /* small helpers */
+    .muted { color:var(--muted); }
+    .legend-dot { width:10px; height:10px; border-radius:999px; display:inline-block; margin-right:8px; vertical-align:middle; }
+    footer { color:var(--muted); font-size:0.9rem; padding:1.25rem 0; text-align:center; }
+    /* responsive plot container fix */
+    #case-study-content { min-height:520px; }
+    @media (max-width: 768px) {
+      #case-study-content { min-height:480px; padding:1rem !important; }
+      .pill { padding:0.45rem .85rem; font-size:0.9rem }
+    }
   </style>
 </head>
-<body class="bg-stone-50 text-stone-800">
+<body>
 
-  <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm p-4 text-center text-xl text-teal-700">Dimensionality Reduction Explorer</header>
+  <!-- Header -->
+  <header class="site-header sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="rounded-full bg-gradient-to-r from-teal-600 to-emerald-400 p-2 shadow-sm">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M3 12h3l3 8 4-16 3 8h3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <div class="text-lg font-bold text-stone-900">Dimensionality Reduction Explorer</div>
+          <div class="text-xs muted">Interactive teaching demo — PCA, t-SNE, Chi-Square, Naive Bayes</div>
+        </div>
+      </div>
+      <div class="hidden md:flex items-center gap-3">
+        <button class="pill secondary" id="download-data">Download CSV</button>
+        <a class="pill" href="#case-study-content">Start Demo</a>
+      </div>
+      <div class="md:hidden">
+        <button id="mobile-open" class="pill secondary">Menu</button>
+      </div>
+    </div>
+  </header>
 
-  <main class="max-w-5xl mx-auto px-4 py-12">
-    <!-- Pills Navigation -->
-    <div id="case-study-nav" class="flex flex-wrap justify-center gap-3 mb-8"></div>
+  <!-- Main -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <section class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <!-- Left column: controls -->
+      <aside class="lg:col-span-1 fade-in">
+        <div class="card">
+          <h3 class="text-lg font-semibold mb-2">Case Studies</h3>
+          <p class="text-sm muted mb-4">Choose a technique to see its dataset and the result after transformation/classification.</p>
+          <div id="case-study-nav" class="flex flex-wrap gap-2"></div>
 
-    <!-- Case Study Content -->
-    <div id="case-study-content" class="bg-white/80 backdrop-blur-lg p-6 rounded-2xl shadow-lg min-h-[450px]"></div>
+          <div class="divider my-4"></div>
+
+          <div class="mt-3">
+            <h4 class="text-sm font-semibold">Active Controls</h4>
+            <div class="mt-2 flex gap-2">
+              <button id="btn-before" class="pill secondary">Before</button>
+              <button id="btn-after" class="pill">After</button>
+            </div>
+            <div class="mt-3 text-sm muted">Tip: Use "After" to show the reduced space or classifier output.</div>
+          </div>
+
+          <div class="mt-6">
+            <h4 class="text-sm font-semibold mb-1">Legend</h4>
+            <div class="text-sm muted">
+              <div class="flex items-center gap-2"><span class="legend-dot" style="background:#06b6d4"></span> Original data</div>
+              <div class="flex items-center gap-2 mt-1"><span class="legend-dot" style="background:#10b981"></span> Reduced / Result</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-6">
+          <h4 class="text-sm font-semibold">Notes for Presentation</h4>
+          <ul class="text-sm mt-2 muted list-disc ml-5">
+            <li>Introduce idea briefly (1 slide) then demo each pill live.</li>
+            <li>Use the Before/After buttons to show what changes.</li>
+            <li>For Chi-Square, you will show feature importance (bar plot).</li>
+            <li>For Naive Bayes, show classification boundary + points.</li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- Right column: main content -->
+      <section class="lg:col-span-3 fade-in">
+        <div id="case-study-content" class="card p-6">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+    </section>
   </main>
 
-<script>
-const caseStudies = ['PCA', 't-SNE', 'Chi-Square', 'Naive Bayes'];
-const nav = document.getElementById('case-study-nav');
+  <footer>
+    © <span id="year"></span> Dimensionality Reduction Explorer — Classroom Demo
+  </footer>
 
-// Generate random clusters for demonstration
-function generate3DData() {
-  const clusters = [];
-  for (let c=0;c<3;c++){
-    for (let i=0;i<15;i++){
-      clusters.push({
-        x: Math.random()*2+ c*3,
-        y: Math.random()*2+ c*3,
-        z: Math.random()*2+ c*3
+<script>
+/* -------------------------
+   Utility: seeded RNG (simple LCG)
+   deterministic for demos so plots are stable across reloads
+   ------------------------- */
+function LCG(seed=12345) {
+  let s = seed >>> 0;
+  return function() {
+    s = (1664525 * s + 1013904223) >>> 0;
+    return s / 4294967296;
+  }
+}
+const rand = LCG(42);
+
+/* -------------------------
+   Dataset Generators (more realistic clusters / patterns)
+   ------------------------- */
+function gaussian(mu, sigma) {
+  // Box-Muller using rand()
+  const u1 = rand() || 1e-9;
+  const u2 = rand() || 1e-9;
+  const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2*Math.PI*u2);
+  return mu + z0 * sigma;
+}
+
+// PCA dataset: 3 well-separated Gaussian clusters in 3D
+function makePCAData() {
+  const centers = [[0,0,0],[6,4,-2],[2,8,4]];
+  const pts = [];
+  centers.forEach((c,idx)=>{
+    for (let i=0;i<60;i++){
+      pts.push({
+        x: gaussian(c[0], 0.9),
+        y: gaussian(c[1], 0.9),
+        z: gaussian(c[2], 0.9),
+        cluster: idx
       });
     }
-  }
-  return {
-    x: clusters.map(p=>p.x),
-    y: clusters.map(p=>p.y),
-    z: clusters.map(p=>p.z),
-    mode: 'markers',
-    type: 'scatter3d',
-    marker: { size: 5, color: 'teal' }
-  };
-}
-
-function generate2DData(study){
-  // Apply simple simulated reduction / transformation
-  const data3D = generate3DData();
-  let x=[],y=[];
-  data3D.x.forEach((v,i)=>{
-    if(study==='PCA') { x.push(v); y.push(data3D.y[i]); }
-    else if(study==='t-SNE') { x.push(data3D.x[i]+Math.random()); y.push(data3D.y[i]+Math.random()); }
-    else if(study==='Chi-Square') { x.push(v*0.6); y.push(data3D.z[i]*0.6); }
-    else if(study==='Naive Bayes') { x.push(data3D.y[i]+Math.random()*0.8); y.push(data3D.z[i]+Math.random()*0.8);}
   });
-  return {
-    x:x, y:y, mode:'markers', type:'scatter', marker:{size:8,color:'green'}
-  };
+  return pts;
 }
 
-function renderCaseStudy(study){
+// t-SNE dataset: interleaving / nonlinear clusters (two-moons-esque-ish)
+function makeTSNEData() {
+  const pts=[];
+  // moon 1
+  for (let i=0;i<80;i++){
+    const t = (Math.PI * (i/80)) + 0.2*rand();
+    pts.push({ x: Math.cos(t)*6 + gaussian(0,0.3), y: Math.sin(t)*6 + gaussian(0,0.3), z: gaussian(0,0.8), cluster: 0});
+  }
+  // moon 2
+  for (let i=0;i<80;i++){
+    const t = (Math.PI * (i/80)) + 0.2*rand();
+    pts.push({ x: Math.cos(t)*6 + 6 + gaussian(0,0.3), y: -Math.sin(t)*6 - 1 + gaussian(0,0.3), z: gaussian(0,0.8), cluster: 1});
+  }
+  // a small cluster
+  for (let i=0;i<30;i++){
+    pts.push({ x: gaussian(12,0.6), y: gaussian(-6,0.6), z: gaussian(0,0.6), cluster: 2});
+  }
+  return pts;
+}
+
+// Chi-Square dataset: simulate categorical feature counts per class
+function makeChiSquareData() {
+  // 6 features, 3 classes, simulate contingency table counts
+  const features = ['F1','F2','F3','F4','F5','F6'];
+  const classes = ['A','B','C'];
+  const data = features.map((f,fi)=>{
+    const counts = classes.map((c,ci) => Math.round(30 + Math.abs(Math.round(15*(Math.sin((fi+1)*(ci+1))+rand())))));
+    return {feature: f, counts};
+  });
+  // We'll compute a mock Chi-square score per feature (higher -> more discriminative)
+  const scores = data.map(d => {
+    // simple variance across class counts as proxy to chi-square
+    const mean = d.counts.reduce((a,b)=>a+b,0)/d.counts.length;
+    const score = d.counts.reduce((s,v)=>s + (v-mean)*(v-mean),0) / d.counts.length;
+    return {feature: d.feature, score: Math.round(score*10)/10, counts: d.counts};
+  });
+  return scores;
+}
+
+// Naive Bayes data: 2D Gaussian blobs with labels (good for visualizing decision boundary)
+function makeNaiveBayesData() {
+  const pts = [];
+  const classes = [
+    {mu:[2,2], sigma:0.8, label:0},
+    {mu:[7,6], sigma:1.1, label:1},
+    {mu:[4,9], sigma:0.9, label:2}
+  ];
+  classes.forEach(c=>{
+    for(let i=0;i<80;i++){
+      pts.push({ x: gaussian(c.mu[0], c.sigma), y: gaussian(c.mu[1], c.sigma), label: c.label});
+    }
+  });
+  return pts;
+}
+
+/* -------------------------
+   Plot helpers using Plotly
+   ------------------------- */
+function renderPCA(pts, mode='before') {
+  // before: 3D scatter; after: 2D projection using top-2 variance directions (we'll simulate by dropping z and adding small noise)
+  if(mode==='before') {
+    const trace = { x: pts.map(p=>p.x), y: pts.map(p=>p.y), z: pts.map(p=>p.z),
+      mode:'markers', type:'scatter3d', marker:{size:4, color: pts.map(p=>p.cluster), colorscale:'Viridis'}, text: pts.map(p=>'cluster ' + p.cluster)};
+    Plotly.newPlot('plot', [trace], {margin:{l:0,r:0,b:0,t:40}, title:'PCA — Original 3D data (clusters)'});
+  } else {
+    // simple simulated PCA: use x,y as top components (for demo)
+    const trace = { x: pts.map(p=>p.x + gaussian(0,0.05)), y: pts.map(p=>p.y + gaussian(0,0.05)),
+      mode:'markers', type:'scatter', marker:{size:8, color: pts.map(p=>p.cluster), colorscale:'Viridis'}, text: pts.map(p=>'cluster ' + p.cluster)};
+    Plotly.newPlot('plot', [trace], {margin:{l:40,r:20,b:40,t:40}, title:'PCA — 2D projection (top 2 components)'});
+  }
+}
+
+function renderTSNE(pts, mode='before') {
+  if(mode==='before') {
+    // show 3D raw data
+    const trace = { x: pts.map(p=>p.x), y: pts.map(p=>p.y), z: pts.map(p=>p.z),
+      mode:'markers', type:'scatter3d', marker:{size:3, color: pts.map(p=>p.cluster), colorscale:'Portland'}, text: pts.map(p=>'cluster ' + p.cluster)};
+    Plotly.newPlot('plot', [trace], {margin:{l:0,r:0,b:0,t:40}, title:'t-SNE demo — raw (3D)'});
+  } else {
+    // simulate t-SNE: cluster-preserving 2D layout: add noise but separate clusters visually
+    const colors = pts.map(p=>p.cluster);
+    const x = pts.map((p,i)=> {
+      if (p.cluster === 0) return p.x*0.5 + Math.sin(i/8)*0.6;
+      if (p.cluster === 1) return (p.x-6)*0.55 + Math.cos(i/10)*0.6 + 6;
+      return p.x*0.35 + 10 + Math.sin(i/6)*0.25;
+    });
+    const y = pts.map((p,i)=>{
+      if (p.cluster===0) return p.y*0.5 + Math.cos(i/9)*0.45;
+      if (p.cluster===1) return (p.y+1)*0.5 + Math.sin(i/11)*0.45 - 1;
+      return p.y*0.4 + 9 + Math.cos(i/5)*0.25;
+    });
+    const trace = { x, y, mode:'markers', type:'scatter', marker:{size:7, color: colors, colorscale:'Portland'}, text: pts.map(p=>'cluster '+p.cluster)};
+    Plotly.newPlot('plot', [trace], {margin:{l:40,r:20,b:40,t:40}, title:'t-SNE — 2D embedding (cluster separation simulated)'});
+  }
+}
+
+function renderChiSquare(scores, mode='before') {
+  if(mode==='before') {
+    // Show counts table-like as stacked bars per feature
+    const features = scores.map(s=>s.feature);
+    const classA = scores.map(s=>s.counts[0]);
+    const classB = scores.map(s=>s.counts[1]);
+    const classC = scores.map(s=>s.counts[2]);
+    const tA = { x: features, y: classA, name: 'Class A', type: 'bar' };
+    const tB = { x: features, y: classB, name: 'Class B', type: 'bar' };
+    const tC = { x: features, y: classC, name: 'Class C', type: 'bar' };
+    Plotly.newPlot('plot', [tA,tB,tC], {barmode:'stack', title:'Feature counts by class (contingency table)'});
+  } else {
+    // After: show chi-square scores as bar chart (higher = more discriminative)
+    const features = scores.map(s=>s.feature);
+    const vals = scores.map(s=>s.score);
+    const trace = { x: features, y: vals, type:'bar', marker:{color:vals, colorscale:'Blues'}, text: vals.map(v=>v.toFixed(1)) };
+    Plotly.newPlot('plot', [trace], {title:'Chi-Square Scores (feature importance proxy)', yaxis:{title:'Score'}});
+  }
+}
+
+function renderNaiveBayes(pts, mode='before') {
+  if(mode==='before') {
+    // scatter colored by class
+    const colors = pts.map(p=>p.label);
+    const trace = { x: pts.map(p=>p.x), y: pts.map(p=>p.y), mode:'markers', type:'scatter', marker:{size:7, color: colors, colorscale:'Viridis'}, text: pts.map(p=> 'class ' + p.label) };
+    Plotly.newPlot('plot', [trace], {title:'Naive Bayes demo — Training points (2D)', margin:{l:40,r:20,b:40,t:40}});
+  } else {
+    // compute simple Gaussian Naive Bayes per class (est. mean/var), then evaluate grid for decision boundary
+    const grouped = {};
+    pts.forEach(p => {
+      if(!grouped[p.label]) grouped[p.label] = [];
+      grouped[p.label].push(p);
+    });
+    const stats = Object.keys(grouped).map(k=>{
+      const arr = grouped[k];
+      const meanX = arr.reduce((s,a)=>s+a.x,0)/arr.length;
+      const meanY = arr.reduce((s,a)=>s+a.y,0)/arr.length;
+      const varX = arr.reduce((s,a)=>s + (a.x-meanX)**2,0)/arr.length + 1e-6;
+      const varY = arr.reduce((s,a)=>s + (a.y-meanY)**2,0)/arr.length + 1e-6;
+      return { label: Number(k), meanX, meanY, varX, varY, prior: arr.length/pts.length };
+    });
+
+    // grid
+    const xs = [];
+    const ys = [];
+    let minX = Math.min(...pts.map(p=>p.x)) - 1;
+    let maxX = Math.max(...pts.map(p=>p.x)) + 1;
+    let minY = Math.min(...pts.map(p=>p.y)) - 1;
+    let maxY = Math.max(...pts.map(p=>p.y)) + 1;
+    const NX = 80, NY = 80;
+    for (let i=0;i<NX;i++) xs.push(minX + (maxX-minX)*i/(NX-1));
+    for (let j=0;j<NY;j++) ys.push(minY + (maxY-minY)*j/(NY-1));
+    // compute matrix of predicted class by log-probabilities (Gaussian NB with independent x,y)
+    const z = [];
+    for (let j=0;j<NY;j++){
+      const row = [];
+      for (let i=0;i<NX;i++){
+        const x = xs[i], y = ys[j];
+        let best = -Infinity, bestLabel = 0;
+        stats.forEach(s=>{
+          const logPX = -0.5*Math.log(2*Math.PI*s.varX) - ((x-s.meanX)**2)/(2*s.varX);
+          const logPY = -0.5*Math.log(2*Math.PI*s.varY) - ((y-s.meanY)**2)/(2*s.varY);
+          const logPrior = Math.log(s.prior);
+          const score = logPX + logPY + logPrior;
+          if(score > best){ best = score; bestLabel = s.label; }
+        });
+        row.push(bestLabel);
+      }
+      z.push(row);
+    }
+
+    // Plot boundary as heatmap (discrete labels), overlay points
+    const heat = { x: xs, y: ys, z: z, type:'heatmap', showscale:false, colorscale:[[0,'#fde68a'],[0.33,'#bbf7d0'],[0.66,'#bae6fd'],[1,'#fbcfe8']], opacity:0.8 };
+    const scatter = { x: pts.map(p=>p.x), y: pts.map(p=>p.y), mode:'markers', type:'scatter', marker:{size:7, color: pts.map(p=>p.label), colorscale:'Viridis', line:{width:1,color:'#fff'}}, text: pts.map(p=>'class ' + p.label) };
+    Plotly.newPlot('plot', [heat, scatter], {title:'Naive Bayes — Decision regions (heat) + points', margin:{l:40,r:20,b:40,t:40}});
+  }
+}
+
+/* -------------------------
+   Application state & rendering
+   ------------------------- */
+const caseStudies = ['PCA','t-SNE','Chi-Square','Naive Bayes'];
+const nav = document.getElementById('case-study-nav');
+let active = caseStudies[0];
+let activeMode = 'before';
+
+// application data (cache)
+const DATA = {
+  PCA: makePCAData(),
+  't-SNE': makeTSNEData(),
+  'Chi-Square': makeChiSquareData(),
+  'Naive Bayes': makeNaiveBayesData()
+};
+
+function renderActive() {
   const content = document.getElementById('case-study-content');
+  // technique-specific explanation
+  let expl = '';
+  if(active === 'PCA') expl = '<strong>PCA</strong> keeps directions of highest variance — good for linear projections and quick dimensionality reduction.';
+  if(active === 't-SNE') expl = '<strong>t-SNE</strong> focuses on preserving local neighborhoods — great for visualizing clusters in non-linear data.';
+  if(active === 'Chi-Square') expl = '<strong>Chi-Square</strong> is often used as a feature selection method for categorical data; higher score → more discriminative.';
+  if(active === 'Naive Bayes') expl = '<strong>Naive Bayes</strong> is a simple probabilistic classifier (assumes feature independence). Here we show decision regions.';
+
   content.innerHTML = `
-    <h3 class="text-2xl font-bold text-teal-700 mb-4">${study} Case Study</h3>
-    <p class="text-stone-700 mb-4">Explore how ${study} transforms or analyzes high-dimensional data.</p>
-    <div id="plot" class="w-full h-[400px]"></div>
-    <div class="mt-4 flex gap-3">
-      <button id="beforeBtn" class="pill active">Before</button>
-      <button id="afterBtn" class="pill">After</button>
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h3 class="text-xl font-semibold text-stone-900 mb-1">${active} Case Study</h3>
+        <div class="muted text-sm">${expl}</div>
+      </div>
+      <div class="text-sm muted">Mode: <strong>${activeMode === 'before' ? 'Before' : 'After'}</strong></div>
     </div>
+    <div id="plot" class="w-full h-[460px] mt-4"></div>
   `;
 
-  const beforeData = generate3DData();
-  const afterData = generate2DData(study);
-
-  Plotly.newPlot('plot', [beforeData], {title: `${study} - Before`});
-
-  document.getElementById('beforeBtn').onclick = ()=>{
-    document.getElementById('beforeBtn').classList.add('active');
-    document.getElementById('afterBtn').classList.remove('active');
-    Plotly.react('plot', [beforeData], {title:`${study} - Before`},{transition:{duration:700}});
-  };
-  document.getElementById('afterBtn').onclick = ()=>{
-    document.getElementById('afterBtn').classList.add('active');
-    document.getElementById('beforeBtn').classList.remove('active');
-    Plotly.react('plot', [afterData], {title:`${study} - After`},{transition:{duration:700}});
-  };
+  // delegate to specific renderer
+  if(active === 'PCA') renderPCA(DATA.PCA, activeMode);
+  else if(active === 't-SNE') renderTSNE(DATA['t-SNE'], activeMode);
+  else if(active === 'Chi-Square') renderChiSquare(DATA['Chi-Square'], activeMode);
+  else if(active === 'Naive Bayes') renderNaiveBayes(DATA['Naive Bayes'], activeMode);
 }
 
-// Create pills
-caseStudies.forEach((study, idx)=>{
-  const btn=document.createElement('button');
-  btn.className='pill'+(idx===0?' active':'');
-  btn.innerText=study;
-  btn.onclick=()=>{
-    document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+/* create pills */
+caseStudies.forEach((s,idx)=>{
+  const btn = document.createElement('button');
+  btn.textContent = s;
+  btn.className = 'pill' + (idx===0 ? ' active' : '');
+  btn.onclick = () => {
+    document.querySelectorAll('#case-study-nav .pill').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
-    renderCaseStudy(study);
+    active = s;
+    renderActive();
   };
   nav.appendChild(btn);
 });
 
-// Initial render
-renderCaseStudy(caseStudies[0]);
-</script>
+/* Before / After buttons */
+document.getElementById('btn-before').addEventListener('click', () => {
+  activeMode = 'before';
+  document.getElementById('btn-before').classList.add('pill');
+  document.getElementById('btn-after').classList.remove('pill');
+  document.getElementById('btn-before').classList.add('active');
+  document.getElementById('btn-after').classList.remove('active');
+  renderActive();
+});
+document.getElementById('btn-after').addEventListener('click', () => {
+  activeMode = 'after';
+  document.getElementById('btn-after').classList.add('pill');
+  document.getElementById('btn-before').classList.remove('pill');
+  document.getElementById('btn-after').classList.add('active');
+  document.getElementById('btn-before').classList.remove('active');
+  renderActive();
+});
 
+/* Download CSV: create a combined CSV of the current active dataset */
+function downloadCSVForActive() {
+  let csv = '';
+  if(active === 'Chi-Square') {
+    csv = 'feature,classA,classB,classC\n' + DATA['Chi-Square'].map(d=> `${d.feature},${d.counts[0]},${d.counts[1]},${d.counts[2]}`).join('\n');
+  } else if(active === 'Naive Bayes') {
+    csv = 'x,y,label\n' + DATA['Naive Bayes'].map(p=> `${p.x.toFixed(3)},${p.y.toFixed(3)},${p.label}`).join('\n');
+  } else {
+    // PCA or t-SNE datasets (3D points)
+    const key = active === 'PCA' ? 'PCA' : 't-SNE';
+    const arr = DATA[key];
+    csv = 'x,y,z,cluster\n' + arr.map(p=> `${p.x.toFixed(3)},${p.y.toFixed(3)},${p.z.toFixed(3)},${p.cluster ?? ''}`).join('\n');
+  }
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${active.replace(/\s+/g,'_')}_dataset.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+document.getElementById('download-data').addEventListener('click', downloadCSVForActive);
+
+/* init */
+document.getElementById('year').textContent = new Date().getFullYear();
+renderActive();
+
+</script>
 </body>
 </html>
